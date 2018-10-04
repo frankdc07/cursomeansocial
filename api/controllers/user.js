@@ -2,6 +2,8 @@
 
 var bcrypt = require('bcrypt-nodejs');
 var mongoosePaginate = require('mongoose-pagination');
+var fs = require('fs');
+var path = require('path');
 
 var User = require('../models/user');
 var jwt = require('../services/jwt');
@@ -162,6 +164,37 @@ function updateUser(req, res){
 
 }
 
+// Subir archivos de imagen/avatar de usuario
+function uploadImage(req, res){
+    var userId = req.params.id;
+
+    if(req.files){
+        var file_path = req.files.image.path;
+        var file_split = file_path.split('\\');
+        var file_name = file_split[2];
+        var ext_split = file_name.split('.');
+        var file_ext = ext_split[1];
+
+        if (userId != req.user.sub){
+            removeFilesOfUploads(res, file_path, 'No tienes permiso para actualizar los datos del usuario');
+        }
+
+        if(file_ext == 'png' || file_ext == 'jpg' || file_ext == 'jpeg' || file_ext == 'gif'){
+            // Actualizar documento de usuario logueado
+        }else{
+            removeFilesOfUploads(res, file_path, 'Extensión no válida');
+        }
+    }else{
+        return res.status(200).send({message: 'No se han subido imagenes'});
+    }
+}
+
+function removeFilesOfUploads(res, file_path, message){
+    fs.unlink(file_path, (err) =>{
+        return res.status(200).send({message: message});
+    });
+}
+
 module.exports = {
     home,
     pruebas,
@@ -169,5 +202,6 @@ module.exports = {
     loginUser,
     getUser,
     getUsers,
-    updateUser
+    updateUser,
+    uploadImage
 }
